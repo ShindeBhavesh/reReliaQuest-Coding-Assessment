@@ -1,0 +1,3 @@
+spring.application.name: entry-level-java-challenge
+
+employee.api-key: ${EMPLOYEE_API_KEY}
