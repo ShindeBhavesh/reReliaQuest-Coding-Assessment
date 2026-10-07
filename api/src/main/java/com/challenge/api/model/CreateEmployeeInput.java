@@ -1,89 +1,25 @@
 package com.challenge.api.model;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 
-public class CreateEmployeeInput {
-
-    private String firstName;
-    private String lastName;
-    private Integer salary;
-    private Integer age;
-    private String jobTitle;
-    private String email;
-    private Instant contractHireDate;
-
-    public CreateEmployeeInput() {}
-
-    public CreateEmployeeInput(
-            String firstName,
-            String lastName,
-            Integer salary,
-            Integer age,
-            String jobTitle,
-            String email,
-            Instant contractHireDate) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.salary = salary;
-        this.age = age;
-        this.jobTitle = jobTitle;
-        this.email = email;
-        this.contractHireDate = contractHireDate;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public Integer getSalary() {
-        return salary;
-    }
-
-    public void setSalary(Integer salary) {
-        this.salary = salary;
-    }
-
-    public Integer getAge() {
-        return age;
-    }
-
-    public void setAge(Integer age) {
-        this.age = age;
-    }
-
-    public String getJobTitle() {
-        return jobTitle;
-    }
-
-    public void setJobTitle(String jobTitle) {
-        this.jobTitle = jobTitle;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Instant getContractHireDate() {
-        return contractHireDate;
-    }
-
-    public void setContractHireDate(Instant contractHireDate) {
-        this.contractHireDate = contractHireDate;
-    }
-}
+/**
+ * Request payload for {@code POST /api/v1/employee}, validated with Jakarta Bean Validation before the controller is
+ * invoked.
+ *
+ * <p>The employee UUID is generated server-side and is therefore not accepted from the client. The contract hire date
+ * is optional: when it is omitted the service uses the current time.
+ */
+public record CreateEmployeeInput(
+        @NotBlank @Size(max = 100) String firstName,
+        @NotBlank @Size(max = 100) String lastName,
+        @PositiveOrZero Integer salary,
+        @Min(18) @Max(100) Integer age,
+        @Size(max = 100) String jobTitle,
+        @Email @Size(max = 254) String email,
+        Instant contractHireDate) {}

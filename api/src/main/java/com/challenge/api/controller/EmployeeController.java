@@ -1,5 +1,6 @@
 package com.challenge.api.controller;
 
+import com.challenge.api.config.OpenApiConfig;
 import com.challenge.api.model.CreateEmployeeInput;
 import com.challenge.api.model.Employee;
 import com.challenge.api.service.EmployeeService;
@@ -9,21 +10,26 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * REST endpoints that expose employee information to Employees-R-US webhooks.
+ *
+ * <p>The controller is deliberately thin: it maps HTTP requests onto {@link EmployeeService} calls and leaves error
+ * translation to {@code ApiExceptionHandler}.
+ */
 @RestController
 @RequestMapping("/api/v1/employee")
-@Tag(name = "Employee Controller", description = "Protected REST API endpoints for employee management")
-@SecurityRequirement(name = "apiKey")
+@Tag(name = "Employees", description = "Protected employee endpoints consumed by Employees-R-US webhooks")
+@SecurityRequirement(name = OpenApiConfig.API_KEY_SCHEME)
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -32,62 +38,41 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
-
     @GetMapping
-    @Operation(
-            summary = "Get all employees",
-            description = "Returns an unfiltered list of all employees in the system.")
+    @Operation(summary = "Get all employees", description = "Returns all employees, unfiltered.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved list of employees"),
+        @ApiResponse(responseCode = "200", description = "Employees returned"),
         @ApiResponse(responseCode = "401", description = "Missing or invalid API key")
     })
     public List<Employee> getAllEmployees() {
         return employeeService.getAllEmployees();
     }
 
-
     @GetMapping("/{uuid}")
-    @Operation(
-            summary = "Get employee by UUID",
-            description = "Returns a single employee record for the provided UUID.")
+    @Operation(summary = "Get employee by UUID", description = "Returns the employee that matches the given UUID.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Employee found and returned"),
-        @ApiResponse(responseCode = "404", description = "Employee not found for given UUID"),
+        @ApiResponse(responseCode = "200", description = "Employee returned"),
+        @ApiResponse(responseCode = "400", description = "Path variable is not a valid UUID"),
+        @ApiResponse(responseCode = "404", description = "No employee exists for the given UUID"),
         @ApiResponse(responseCode = "401", description = "Missing or invalid API key")
     })
     public Employee getEmployeeByUuid(
-            @Parameter(description = "UUID of the employee to retrieve", required = true) @PathVariable UUID uuid) {
-        Employee employee = employeeService.getEmployeeByUuid(uuid);
-        if (employee == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found for UUID: " + uuid);
-        }
-        return employee;
+            @Parameter(description = "UUID of the employee", example = "11111111-1111-1111-1111-111111111111")
+                    @PathVariable
+                    UUID uuid) {
+        return employeeService.getEmployeeByUuid(uuid);
     }
 
-
     @PostMapping
-    @Operation(
-            summary = "Create new employee",
-            description = "Creates a new employee record and assigns a unique UUID.")
+    @Operation(summary = "Create employee", description = "Creates an employee and assigns a server-generated UUID.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Employee successfully created"),
-        @ApiResponse(responseCode = "400", description = "Invalid request payload (missing required attributes)"),
+        @ApiResponse(responseCode = "200", description = "Employee created"),
+        @ApiResponse(responseCode = "400", description = "Request body is missing or invalid"),
         @ApiResponse(responseCode = "401", description = "Missing or invalid API key")
     })
     public Employee createEmployee(
-            @Parameter(description = "Employee attributes to create", required = true) @RequestBody
-                    CreateEmployeeInput requestBody) {
-        if (requestBody == null
-                || requestBody.getFirstName() == null
-                || requestBody.getFirstName().isBlank()
-                || requestBody.getLastName() == null
-                || requestBody.getLastName().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First name and last name are required");
-        }
-        try {
-            return employeeService.createEmployee(requestBody);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+            @Parameter(description = "Attributes of the employee to create", required = true) @Valid @RequestBody
+                    CreateEmployeeInput input) {
+        return employeeService.createEmployee(input);
     }
 }

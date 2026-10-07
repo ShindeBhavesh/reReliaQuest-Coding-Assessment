@@ -8,7 +8,7 @@ build:
   tags:
     - RQD-CI-K8s
   script:
-    - ./gradlew build -x test
+    - ./gradlew clean build --no-daemon
   artifacts:
     paths:
       - "*/build/libs/"
