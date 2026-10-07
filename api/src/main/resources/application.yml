@@ -1,3 +1,9 @@
-spring.application.name: entry-level-java-challenge
+spring:
+  application:
+    name: entry-level-java-challenge
 
-employee.api-key: ${EMPLOYEE_API_KEY}
+# API key that protects the employee endpoints. Override it in any real environment by setting
+# EMPLOYEE_API_KEY; the fallback keeps a fresh clone runnable without hidden setup and is not a secret.
+employee:
+  security:
+    api-key: ${EMPLOYEE_API_KEY:local-dev-api-key}

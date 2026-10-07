@@ -3,12 +3,17 @@ package com.challenge.api.model;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * In-memory {@link Employee} implementation.
+ *
+ * <p>Only the first and last name are stored. {@link #getFullName()} is computed from them on every call, so changing
+ * a name can never leave the full name stale.
+ */
 public class EmployeeModel implements Employee {
 
     private UUID uuid;
     private String firstName;
     private String lastName;
-    private String fullName;
     private Integer salary;
     private Integer age;
     private String jobTitle;
@@ -31,26 +36,12 @@ public class EmployeeModel implements Employee {
         this.uuid = uuid;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.fullName = computeFullName(firstName, lastName);
         this.salary = salary;
         this.age = age;
         this.jobTitle = jobTitle;
         this.email = email;
         this.contractHireDate = contractHireDate;
         this.contractTerminationDate = contractTerminationDate;
-    }
-
-    private String computeFullName(String fName, String lName) {
-        if (fName == null && lName == null) {
-            return null;
-        }
-        if (fName == null) {
-            return lName;
-        }
-        if (lName == null) {
-            return fName;
-        }
-        return fName + " " + lName;
     }
 
     @Override
@@ -71,9 +62,6 @@ public class EmployeeModel implements Employee {
     @Override
     public void setFirstName(String name) {
         this.firstName = name;
-        if (this.fullName == null && name != null) {
-            this.fullName = computeFullName(this.firstName, this.lastName);
-        }
     }
 
     @Override
@@ -84,22 +72,25 @@ public class EmployeeModel implements Employee {
     @Override
     public void setLastName(String name) {
         this.lastName = name;
-        if (this.fullName == null && name != null) {
-            this.fullName = computeFullName(this.firstName, this.lastName);
-        }
     }
 
     @Override
     public String getFullName() {
-        if (fullName == null && (firstName != null || lastName != null)) {
-            fullName = computeFullName(firstName, lastName);
+        String first = normalize(firstName);
+        String last = normalize(lastName);
+
+        if (first == null) {
+            return last;
         }
-        return fullName;
+        if (last == null) {
+            return first;
+        }
+        return first + " " + last;
     }
 
     @Override
     public void setFullName(String name) {
-        this.fullName = name;
+        // The full name is derived from the first and last name, so there is nothing to store here.
     }
 
     @Override
@@ -160,5 +151,9 @@ public class EmployeeModel implements Employee {
     @Override
     public void setContractTerminationDate(Instant date) {
         this.contractTerminationDate = date;
+    }
+
+    private static String normalize(String name) {
+        return name == null || name.isBlank() ? null : name.trim();
     }
 }
